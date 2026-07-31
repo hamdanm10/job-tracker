@@ -4,9 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-This is a freshly generated Rails 8.1 application (`JobTracker`) — no domain models, controllers, or tests
-have been written yet. There is no `root` route configured. When adding the first real feature, expect to
-also be setting conventions (test framework, first models/controllers) that later work will follow.
+This is a Rails 8.1 application (`JobTracker`) for tracking job applications, intended to run only on a
+local server (single user, not deployed for public/multi-user access). Because of this, **no
+authentication/authorization is needed** — do not add `devise`, `bcrypt`/`has_secure_password`, login
+screens, or user-scoped access checks unless explicitly asked.
+
+No domain models, controllers, or tests have been written yet. There is no `root` route configured. When
+adding the first real feature, expect to also be setting conventions (test framework, first
+models/controllers) that later work will follow.
 
 ## Stack
 
@@ -23,6 +28,52 @@ also be setting conventions (test framework, first models/controllers) that late
   before assuming `bin/rails test` or `rspec` works.
 - Deployment via **Kamal** (`config/deploy.yml`, `.kamal/`) to a Docker container; **Thruster** in front of
   Puma in production.
+
+## Architecture conventions
+
+These conventions apply once real features are added (no services/repositories exist yet, so treat this
+as the pattern to establish for the first one):
+
+- **Service objects** (`app/services/`): put business logic/use cases here instead of in controllers or
+  models. Every service inherits from a `ApplicationService` base class (`app/services/application_service.rb`)
+  that exposes a `.call(...)` class method delegating to an instance `#call`, e.g.:
+  ```ruby
+  class ApplicationService
+    def self.call(...) = new(...).call
+  end
+
+  class Users::CreateService < ApplicationService
+    def initialize(params)
+      @params = params
+    end
+
+    def call
+      # ...
+    end
+  end
+  ```
+- **Repositories** (`app/repositories/`): put ActiveRecord query logic here instead of scattering
+  `.where`/`.joins`/scopes across models, controllers, and services. One repository per model/aggregate,
+  named `<Model>Repository` (e.g. `UserRepository`).
+- **Routes** (`config/routes.rb`): always declare routes with `resources`/`resource` (with `only:`/
+  `except:` and nested `member`/`collection` blocks as needed). Do not add bare `get`/`post`/`patch`/
+  `delete` routes — `resources` keeps `routes.rb` short, RESTful, and easy to read.
+- **Controllers** stay thin: only pass parameters into a service and render/redirect based on the
+  result. Do not put business logic or ActiveRecord queries in controllers.
+  - Business logic execution → **services** (`app/services/`).
+  - Database access → **repositories** (`app/repositories/`), called from the service, not from the
+    controller directly.
+- **Reusable view components**: build them with the `view_component` gem instead of partials
+  (`app/components/`, `<Name>Component < ViewComponent::Base` with a matching `.html.erb` template).
+  The `view_component` gem is not yet in the `Gemfile` — add it (`gem "view_component"`) the first time
+  a component is introduced.
+- **Pagination**: use the `pagy` gem for paginating data, not `kaminari`/`will_paginate` or manual
+  `limit`/`offset`. Not yet in the `Gemfile` — add it (`gem "pagy"`) the first time pagination is needed.
+- **Avoid N+1 queries**: always eager-load associations used in loops/views (`includes`/`preload`/
+  `eager_load` in the repository), and watch for N+1s introduced through service/view code.
+- **Styling**: use Tailwind CSS for all views/components, not the default `app/assets/stylesheets/
+  application.css` handwritten CSS. Not yet installed — add it via the `tailwindcss-rails` gem
+  (`gem "tailwindcss-rails"`, then `bin/rails tailwindcss:install`) the first time styling is needed.
 
 ## Commands
 
@@ -59,6 +110,44 @@ bin/importmap audit         # JS dependency vulnerability audit
 ```
 
 There is currently no test-running command — see "Project state" above.
+
+## Commit message conventions
+
+When creating commits (and pushing to GitHub), follow the Angular-style convention
+(see https://gist.github.com/nyancodeid/63f19941c81252bb0cca9c14497cf9f7):
+
+```
+<type>(<scope>): <subject>
+<BLANK LINE>
+<body>
+<BLANK LINE>
+<footer>
+```
+
+- The header (`<type>(<scope>): <subject>`) is mandatory; `<scope>` is optional. No line should
+  exceed 100 characters.
+- **Types**:
+  - `build`: changes to the build system or external dependencies
+  - `ci`: changes to CI configuration and scripts
+  - `docs`: documentation-only changes
+  - `feat`: a new feature
+  - `fix`: a bug fix
+  - `perf`: a code change that improves performance
+  - `refactor`: a code change that neither fixes a bug nor adds a feature
+  - `style`: changes that do not affect the meaning of the code (formatting, whitespace, etc.)
+  - `test`: adding missing tests or correcting existing tests
+- **Scope**: names the affected area of the app (e.g. a model, controller, or module). Leave it
+  empty for changes that cut across scopes, such as broad `style`, `test`, or `refactor` commits.
+- **Subject**: imperative, present tense ("add" not "added"/"adds"), no capitalized first letter,
+  no trailing period.
+- **Body**: same tense/style as the subject; explain the motivation for the change and contrast it
+  with previous behavior.
+- **Footer**: reference closed issues (e.g. `Closes #123`) and document breaking changes, prefixed
+  with `BREAKING CHANGE:`.
+- **Reverts**: start the subject with `revert:` followed by the header of the reverted commit, and
+  include `This reverts commit <hash>.` in the body.
+- **No Claude co-author**: do not add `Co-Authored-By: Claude` (or any Claude/Anthropic attribution)
+  to commit messages.
 
 ## Notes
 
