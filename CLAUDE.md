@@ -64,16 +64,19 @@ as the pattern to establish for the first one):
   - Database access → **repositories** (`app/repositories/`), called from the service, not from the
     controller directly.
 - **Reusable view components**: build them with the `view_component` gem instead of partials
-  (`app/components/`, `<Name>Component < ViewComponent::Base` with a matching `.html.erb` template).
-  The `view_component` gem is not yet in the `Gemfile` — add it (`gem "view_component"`) the first time
-  a component is introduced.
+  (`app/components/`, `<Name>Component < ApplicationComponent` with a matching `.html.erb` template).
+  Generate new ones with `bin/rails generate view_component:component <Name> <args>` — it picks up
+  `ApplicationComponent` (`app/components/application_component.rb`) as the base class automatically.
 - **Pagination**: use the `pagy` gem for paginating data, not `kaminari`/`will_paginate` or manual
-  `limit`/`offset`. Not yet in the `Gemfile` — add it (`gem "pagy"`) the first time pagination is needed.
+  `limit`/`offset`. `Pagy::Method` is included in `ApplicationController`, so call
+  `pagy(:offset, scope, **options)` (or `:keyset`, etc.) in a controller action and render the result
+  with the `@pagy` instance's helpers (e.g. `@pagy.series_nav`, `@pagy.info_tag`) in the view. Global
+  options live in `config/initializers/pagy.rb`.
 - **Avoid N+1 queries**: always eager-load associations used in loops/views (`includes`/`preload`/
   `eager_load` in the repository), and watch for N+1s introduced through service/view code.
-- **Styling**: use Tailwind CSS for all views/components, not the default `app/assets/stylesheets/
-  application.css` handwritten CSS. Not yet installed — add it via the `tailwindcss-rails` gem
-  (`gem "tailwindcss-rails"`, then `bin/rails tailwindcss:install`) the first time styling is needed.
+- **Styling**: use Tailwind CSS (`tailwindcss-rails`) for all views/components, not the default
+  `app/assets/stylesheets/application.css` handwritten CSS. `bin/dev` runs the Rails server together with
+  the Tailwind watcher via `Procfile.dev`/foreman.
 
 ## Commands
 
