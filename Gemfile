@@ -60,3 +60,7 @@ group :development do
 end
 
 gem "tailwindcss-rails", "~> 4.6"
+
+gem "pagy", "~> 43.6"
+
+gem "view_component", "~> 4.12"
