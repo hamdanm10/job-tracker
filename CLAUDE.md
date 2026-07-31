@@ -81,6 +81,9 @@ as the pattern to establish for the first one):
   SVGs or another icon set. Render with the `lucide_icon` helper, e.g. `<%= lucide_icon("briefcase") %>`;
   pass extra HTML attributes as a hash (`lucide_icon("briefcase", "class" => "size-4")`). Global default
   attributes go in `config/initializers/lucide_rails.rb` via `LucideRails.default_options`.
+- **JavaScript**: use Stimulus controllers (`app/javascript/controllers/`) instead of vanilla/inline
+  JavaScript or hand-written DOM event wiring. New controllers are auto-registered via
+  `app/javascript/controllers/index.js`.
 
 ## Commands
 
