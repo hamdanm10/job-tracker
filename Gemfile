@@ -64,3 +64,5 @@ gem "tailwindcss-rails", "~> 4.6"
 gem "pagy", "~> 43.6"
 
 gem "view_component", "~> 4.12"
+
+gem "lucide-rails", "~> 0.7.4"
