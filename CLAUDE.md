@@ -77,6 +77,10 @@ as the pattern to establish for the first one):
 - **Styling**: use Tailwind CSS (`tailwindcss-rails`) for all views/components, not the default
   `app/assets/stylesheets/application.css` handwritten CSS. `bin/dev` runs the Rails server together with
   the Tailwind watcher via `Procfile.dev`/foreman.
+- **Icons**: use the `lucide-rails` gem (https://github.com/heyvito/lucide-rails) for icons, not inline
+  SVGs or another icon set. Render with the `lucide_icon` helper, e.g. `<%= lucide_icon("briefcase") %>`;
+  pass extra HTML attributes as a hash (`lucide_icon("briefcase", "class" => "size-4")`). Global default
+  attributes go in `config/initializers/lucide_rails.rb` via `LucideRails.default_options`.
 
 ## Commands
 
